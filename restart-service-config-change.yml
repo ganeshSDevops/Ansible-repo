@@ -1,0 +1,35 @@
+---
+# Playbook: Restart service if configuration changes
+# This playbook installs nginx and copies a configuration file.
+# If the configuration file changes, it triggers a handler to restart nginx.
+
+- name: Restart service if config change
+  hosts: data_server          # Run this playbook only on hosts in the "data_server" inventory group
+  become: yes                 # Execute tasks with root/sudo privileges
+  gather_facts: yes           # Collect system information from the target machines
+
+  tasks:
+
+    # Install nginx if it is not already installed
+    # Ansible ensures idempotency (will not reinstall if already present)
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: present
+
+    # Copy nginx configuration file from Ansible control node to remote server
+    # If the file changes, the handler will be triggered
+    - name: Copy configure file
+      copy:
+        src: nginx.conf                    # Source file on Ansible controller
+        dest: /home/ubuntu/nginx_conf      # Destination path on remote server
+      notify: Restart nginx service        # Notify handler only if file changes
+
+  handlers:
+
+    # Handlers run only when notified by tasks
+    # This prevents unnecessary service restarts
+    - name: Restart nginx service
+      service:
+        name: nginx
+        state: restarted

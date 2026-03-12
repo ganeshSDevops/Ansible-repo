@@ -1,0 +1,22 @@
+---
+# Playbook: Disk Space Monitoring
+# This playbook checks disk usage on the root filesystem (/) 
+# and prints the disk space information on the console.
+
+- name: Disk space monitoring
+  hosts: data_server      # Run the playbook only on servers in the "data_server" inventory group
+  become: yes             # Execute tasks with elevated privileges (sudo)
+  gather_facts: yes       # Collect system information from target servers
+
+  tasks:
+
+    # Run the Linux command to check disk usage of root filesystem
+    # df -h → shows disk usage in human readable format (GB/MB)
+    - name: Check disk space
+      command: df -h /
+      register: disk_output      # Store command output in a variable
+
+    # Print the captured disk usage output on the Ansible console
+    - name: Show disk space on console
+      debug:
+        msg: "Disk space details: {{ disk_output.stdout }}"
