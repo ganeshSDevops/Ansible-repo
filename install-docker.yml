@@ -1,0 +1,51 @@
+---
+# Playbook: Install Docker on Ubuntu servers
+# This playbook installs Docker, starts the service,
+# enables it on boot, and verifies the installation.
+
+- name: Install Docker
+  hosts: data_server        # Run playbook on servers in "data_server" inventory group
+  become: yes               # Execute tasks with sudo/root privileges
+  gather_facts: yes         # Collect system information
+
+  vars:
+    docker_package: docker.io
+
+  tasks:
+
+    # Update apt repository cache to ensure latest packages
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    # Install Docker package
+    - name: Install Docker
+      apt:
+        name: "{{ docker_package }}"
+        state: present
+
+    # Start Docker service
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
+        enabled: yes      # Ensure Docker starts automatically after reboot
+
+    # Add ubuntu user to docker group
+    # This allows running docker commands without sudo
+    - name: Add ubuntu user to docker group
+      user:
+        name: ubuntu
+        groups: docker
+        append: yes
+
+    # Verify Docker installation by checking version
+    - name: Check Docker version
+      command: docker --version
+      register: docker_version
+      changed_when: false
+
+    # Print Docker version on console
+    - name: Show Docker version
+      debug:
+        msg: "Docker version: {{ docker_version.stdout }}"

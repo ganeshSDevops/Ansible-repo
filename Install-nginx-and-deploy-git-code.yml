@@ -1,0 +1,59 @@
+---
+# Playbook: Install Nginx and deploy web application from Git repository
+# This playbook installs required packages, cleans the default nginx web directory,
+# clones the application code from GitHub, and restarts nginx.
+
+- name: Install Nginx and deploy application from Git
+  hosts: data_server           # Target only servers in the inventory group "data_server"
+  become: yes                  # Run tasks with sudo privileges
+  gather_facts: yes            # Collect system information (OS, IP, CPU etc.)
+
+  vars:
+    # Git repository containing application code
+    git_url: https://github.com/ganeshSDevops/Ansible-repo.git
+
+    # Directory where nginx serves web files
+    destination_path: /var/www/html/
+
+    # List of packages required for deployment
+    packages:
+      - nginx
+      - git
+
+  tasks:
+
+    # Install required packages (nginx web server + git for cloning repo)
+    - name: Install required packages
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes      # Update apt repository cache before installation
+      loop: "{{ packages }}"
+
+    # Ensure nginx service is running and enabled on system boot
+    - name: Ensure nginx service is running
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    # Remove default nginx files (like index.nginx-debian.html)
+    # because Git cannot clone into a non-empty directory
+    - name: Clean default nginx web directory
+      shell: rm -rf {{ destination_path }}*
+      args:
+        warn: false
+
+    # Clone application code from GitHub into nginx web directory
+    - name: Clone repository to web directory
+      git:
+        repo: "{{ git_url }}"
+        dest: "{{ destination_path }}"
+        version: main          # Branch to deploy
+        update: yes            # Pull latest changes if repo already exists
+
+    # Restart nginx to serve the new application content
+    - name: Restart nginx service
+      service:
+        name: nginx
+        state: restarted

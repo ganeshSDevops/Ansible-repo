@@ -1,0 +1,37 @@
+---
+- name: Install and start nginx
+  hosts: all
+  become: yes
+  gather_facts: yes   # Collect system information (OS, IP, CPU etc)
+
+  vars:
+    appName: nginx    # Variable for application name
+
+  tasks:
+
+    - name: Install Nginx on RedHat family (Amazon Linux, RHEL, CentOS)
+      yum:
+        name: "{{ appName }}"
+        state: present
+      when: ansible_os_family == "RedHat"   # Run only on RedHat based OS
+
+    - name: Install nginx on Debian family (Ubuntu, Debian)
+      apt:
+        name: "{{ appName }}"
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Start and enable Nginx service
+      service:
+        name: "{{ appName }}"
+        state: started
+        enabled: yes   # Ensures service starts after reboot
+
+    - name: Check nginx service status
+      command: systemctl is-active nginx
+      register: status_output   # Capture command output
+
+    - name: Show nginx status
+      debug:
+        msg: "Nginx = {{ status_output.stdout }}"

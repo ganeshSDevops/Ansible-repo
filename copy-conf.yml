@@ -1,0 +1,10 @@
+---
+- name: Copy config
+  hosts: web
+  become: yes
+
+  tasks:
+    - name: Copy file
+      copy:
+        src: nginx.conf
+        dest: /etc/nginx/nginx.conf

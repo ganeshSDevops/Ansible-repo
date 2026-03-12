@@ -1,0 +1,17 @@
+--- 
+- name: example of jinja template
+  hosts: data_server
+  become: yes
+  gather_facts: yes
+
+  vars:
+    myname: Ganesh
+    job: Devops
+    package: 10+
+
+  tasks:
+    - name: copy config my on data data_server
+      template:
+        src: myconfig.j2
+        dest: /home/"{{ ansible_user }}"/my_server_config.yml
+

@@ -1,0 +1,48 @@
+---
+# Playbook: Create multiple users and assign DevOps access
+# This playbook creates a DevOps group, creates multiple users,
+# assigns them a home directory and bash shell, and grants sudo access.
+
+- name: create user Industry level
+  hosts: data_server        # Target only servers in the inventory group "data_server"
+  become: yes               # Run tasks with elevated (root) privileges
+  gather_facts: yes         # Collect system information about target hosts
+
+  vars:
+    # List of users to be created on the server
+    users:
+      - dev1
+      - dev2
+      - dev3
+
+  tasks:
+
+    # Ensure the 'devops' group exists before creating users
+    # If the group already exists, Ansible will skip this task
+    - name: ensure group present
+      group:
+        name: devops
+        state: present
+
+    # Create users from the defined list
+    # Each user will:
+    # - belong to the devops group
+    # - have /bin/bash as default shell
+    # - have a home directory created automatically
+    - name: create user
+      user:
+        name: "{{ item }}"
+        group: devops
+        shell: /bin/bash
+        state: present
+        create_home: yes
+      loop: "{{ users }}"
+
+    # Add the created users to the sudo group
+    # append: yes ensures existing group memberships are not overwritten
+    - name: Add users to sudo group
+      user:
+        name: "{{ item }}"
+        groups: sudo
+        append: yes
+      loop: "{{ users }}"

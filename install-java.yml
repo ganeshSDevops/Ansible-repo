@@ -1,0 +1,39 @@
+---
+# Playbook: Install Java and verify installation
+- name: Install Java
+  hosts: data_server          # Target server group
+  become: yes                 # Run tasks with sudo
+  gather_facts: yes           # Collect system facts
+
+  vars:
+    # Java package names for different OS families
+    java_appName_debian: openjdk-11-jdk
+    java_appName_redhat: java-11-openjdk
+
+  tasks:
+
+    # Install Java on Debian based systems (Ubuntu/Debian)
+    - name: Install Java on Debian
+      apt:
+        name: "{{ java_appName_debian }}"
+        state: present
+        update_cache: yes
+      when: ansible_facts["os_family"] == "Debian"
+
+    # Install Java on RedHat based systems (Amazon Linux/CentOS/RHEL)
+    - name: Install Java on RedHat
+      yum:
+        name: "{{ java_appName_redhat }}"
+        state: present
+      when: ansible_facts["os_family"] == "RedHat"
+
+    # Verify Java installation
+    - name: Check Java version
+      command: java -version
+      register: java_version_output
+      changed_when: false
+
+    # Print Java version on console
+    - name: Show Java version
+      debug:
+        msg: "Java version: {{ java_version_output.stderr }}"

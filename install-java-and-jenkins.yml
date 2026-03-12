@@ -1,0 +1,64 @@
+---
+# Playbook: Install Jenkins with Java
+# Jenkins requires Java to run. This playbook installs Java first,
+# then installs Jenkins, starts the service, and enables it on boot.
+
+- name: Install Jenkins with Java
+  hosts: data_server            # Run playbook only on servers in "data_server" group
+  become: yes                   # Run tasks with sudo/root privileges
+  gather_facts: yes             # Collect system information
+
+  vars:
+    java_package: openjdk-11-jdk
+
+  tasks:
+
+    # Update apt repository cache
+    # This ensures we install the latest available packages
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    # Install Java (required dependency for Jenkins)
+    - name: Install Java
+      apt:
+        name: "{{ java_package }}"
+        state: present
+
+    # Add Jenkins official repository key
+    # This allows the system to trust Jenkins packages
+    - name: Add Jenkins repository key
+      apt_key:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+        state: present
+
+    # Add Jenkins repository to apt sources
+    - name: Add Jenkins repository
+      apt_repository:
+        repo: deb https://pkg.jenkins.io/debian-stable binary/
+        state: present
+
+    # Install Jenkins package
+    - name: Install Jenkins
+      apt:
+        name: jenkins
+        state: present
+        update_cache: yes
+
+    # Start Jenkins service
+    - name: Start Jenkins service
+      service:
+        name: jenkins
+        state: started
+        enabled: yes
+
+    # Check Jenkins service status
+    - name: Check Jenkins status
+      command: systemctl is-active jenkins
+      register: jenkins_status
+      changed_when: false
+
+    # Print Jenkins status on console
+    - name: Show Jenkins status
+      debug:
+        msg: "Jenkins service status: {{ jenkins_status.stdout }}"
