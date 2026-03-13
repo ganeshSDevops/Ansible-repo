@@ -1,0 +1,20 @@
+1. Refresh/update apt package repo on your system
+2. install ansible using official page (link:  https://docs.ansible.com/projects/ansible/latest/installation_guide/installation_distros.html)
+3. check --> ansible --version
+4. setup hosts/inventory file - location /etc/ansible/hosts
+######################################################################
+example of hosts file
+######################################################################
+[web_server_grp]
+web_server_01 ansible_host=172.31.29.113 ansible_user=ubuntu 
+web_server_02 ansible_host=172.31.22.208 ansible_user=ubuntu
+web_server_03 ansible_host=172.31.17.178 ansible_user=ubuntu
+
+[web_server_grp:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_ssh_private_key_file=/home/ubuntu/keys/jenkinsMaster.pem
+######################################################################
+######################################################################
+5. after that check --> ansible-inventory --list (it will show you inventory file in json format
+6. as your setting up 1st time you have to do ssh-login on all machine from ansible master
+7. check --> ansible all -m ping --> you should get pong as response 
