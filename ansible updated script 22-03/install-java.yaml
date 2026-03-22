@@ -1,0 +1,26 @@
+---
+- name: Install Java
+  hosts: all 
+  become: yes
+  gather_facts: yes
+
+  vars:
+   java_package: openjdk-17-jdk
+
+  tasks:
+  - name: update apt cache 
+    apt: 
+      update_cache: yes 
+    
+  - name: Install java 
+    apt: 
+      name: "{{ java_package }}"
+      state: present
+
+  - name: verify java installation
+    command: java --version
+    register: java_version
+
+  - name: Print Java version
+    debug:
+      msg: "{{ java_version.stderr }}"

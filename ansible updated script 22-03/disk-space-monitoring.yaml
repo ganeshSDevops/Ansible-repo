@@ -1,0 +1,17 @@
+--- 
+- name: Disk space monitoring
+  hosts: all 
+  become: yes
+  gather_facts: yes
+
+  vars:
+
+  tasks:
+  - name: check Disk space
+    shell: df -h / | awk 'NR==2 {print $5}' | sed 's/%//'
+    register: disk_status
+
+  - name: print disk usage
+    debug:
+      msg: "Disk usage: {{ disk_status.stdout }}"
+    

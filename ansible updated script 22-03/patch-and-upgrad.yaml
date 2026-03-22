@@ -1,0 +1,167 @@
+---
+- name: Patch Ubuntu servers (Production)
+  hosts: all
+  become: yes
+  serial: 2        # patch 2 servers at a time (safe rollout)
+  gather_facts: yes
+
+  tasks:
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Upgrade packages
+      apt:
+        upgrade: dist
+      register: upgrade_status
+
+    - name: Remove unused packages
+      apt:
+        autoremove: yes
+
+    - name: Reboot if required
+      reboot:
+        msg: "Reboot initiated by Ansible after patching"
+        pre_reboot_delay: 10
+      when: upgrade_status.changed
+
+    - name: Wait for system to come back
+      wait_for_connection:
+        delay: 10
+        timeout: 300
+
+####################################################
+
+🧠 What is “Patching a Machine”?
+
+👉 Think like this:
+
+Your Linux server has:
+
+old packages
+security bugs
+outdated software
+
+👉 Patching = updating everything to latest version
+
+🔧 Manual Way (What you already know)
+sudo apt update
+sudo apt upgrade -y
+sudo apt autoremove -y
+
+👉 This is manual patching
+
+🤖 What Ansible Does?
+
+👉 Ansible runs the same commands on many servers automatically
+
+📄 Your Playbook (Simple Version)
+- name: Patch Ubuntu servers
+  hosts: all
+  become: yes
+
+  tasks:
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Upgrade packages
+      apt:
+        upgrade: dist
+
+    - name: Remove unused packages
+      apt:
+        autoremove: yes
+🧠 Now Understand Line by Line
+🔹 Step 1: Update package list
+apt:
+  update_cache: yes
+
+👉 Same as:
+
+apt update
+
+👉 Why?
+
+System checks latest available versions
+🔹 Step 2: Upgrade system
+apt:
+  upgrade: dist
+
+👉 Same as:
+
+apt upgrade
+
+👉 What happens:
+
+Old packages → replaced with new ones
+Security fixes applied
+Bug fixes applied
+🔹 Step 3: Clean unused packages
+apt:
+  autoremove: yes
+
+👉 Same as:
+
+apt autoremove
+
+👉 Removes:
+
+Old libraries
+Unused dependencies
+🚀 Real-Life Example
+
+👉 Suppose your server has:
+
+old nginx version
+old openssl (security risk ⚠️)
+
+👉 After patching:
+
+nginx updated
+security issues fixed
+🔥 Now Advanced Part (Important)
+👉 Why reboot needed?
+
+Some updates affect:
+
+Kernel (core OS)
+System libraries
+
+👉 Changes apply only after restart
+
+👉 How Ansible handles reboot?
+- name: Reboot if required
+  reboot:
+  when: upgrade_status.changed
+
+👉 Means:
+
+If something changed → reboot
+If nothing changed → no reboot
+⚡ What is serial: 2 (Very Important)
+serial: 2
+
+👉 Imagine 10 servers:
+
+Without serial ❌:
+
+All 10 update at same time → downtime 💥
+
+With serial ✅:
+
+2 servers update at a time
+Remaining servers still running
+
+👉 This is called:
+➡️ Rolling update (very important in production)
+
+🧠 Full Flow (Easy Way)
+Update package list
+Upgrade system
+Clean unused files
+Reboot if needed
+Move to next server
+####################################################

@@ -1,0 +1,88 @@
+---
+- name: Install Docker 
+  hosts: all 
+  become: yes
+  gather_facts: yes
+
+  vars:
+    package_dep:
+      - ca-certificates
+      - curl
+      - gnupg
+
+    docker_packages:
+      - docker-ce 
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin 
+
+  tasks:
+
+    - name: Remove old Docker versions
+      apt:
+        name:
+          - docker
+          - docker.io
+          - containerd
+          - runc
+        state: absent
+        purge: yes
+      ignore_errors: yes
+
+    - name: Update apt package
+      apt: 
+        update_cache: yes
+    
+    - name: Install dependencies
+      apt:
+        name: "{{ package_dep }}"
+        state: present
+
+    - name: Create keyring directory
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+
+    - name: Add Docker GPG key (fixed)
+      shell: |
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
+        gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+      args:
+        creates: /etc/apt/keyrings/docker.gpg
+
+    - name: Add Docker repo (fixed)
+      apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu jammy stable"
+        state: present 
+
+    - name: Update apt cache
+      apt: 
+        update_cache: yes
+
+    - name: Install Docker packages
+      apt: 
+        name: "{{ docker_packages }}"
+        state: present
+
+    - name: Start and enable Docker
+      service:
+        name: docker
+        state: started 
+        enabled: yes
+
+    - name: Add user to docker group
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+  
+    - name: Verify Docker installation
+      command: docker --version
+      register: docker_version
+      changed_when: false
+
+    - name: Print Docker version
+      debug:
+        msg: "{{ docker_version.stdout }}"

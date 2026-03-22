@@ -1,0 +1,45 @@
+---
+- name: Copy app.config file from Ansible master to worker
+  hosts: all
+  become: yes
+  gather_facts: yes
+
+  vars:
+    configFileName: app.config
+    dest_path: /home/ubuntu/ansible-master-copy-data
+
+  tasks:
+
+    - name: Create directory on worker node
+      file:
+        path: "{{ dest_path }}"
+        state: directory
+        mode: "0755"
+
+    - name: Copy app.config from master to worker node
+      copy:
+        src: "{{ configFileName }}"
+        dest: "{{ dest_path }}/{{ configFileName }}"
+        mode: "0644"
+  
+####################################################
+🧠 Important Concepts (Interview Focus)
+🔹 Where is src located?
+
+👉 By default:
+
+src is from Ansible controller (master)
+🔹 What does copy module do?
+Copies file from controller → managed node
+Idempotent (won’t copy if unchanged) ✅
+🔹 File permissions
+mode: "0644"
+Owner: read/write
+Others: read only
+⚡ Advanced Version (Interview Booster 🔥)
+👉 Backup existing file before overwrite
+copy:
+  src: "{{ configFileName }}"
+  dest: "{{ dest_path }}/{{ configFileName }}"
+  backup: yes
+####################################################

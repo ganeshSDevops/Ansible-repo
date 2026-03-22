@@ -1,0 +1,53 @@
+---
+- name: Install nginx and deploy webapp using git
+  hosts: all
+  become: yes
+  gather_facts: yes
+
+  vars:
+    appName:
+    - nginx
+    - git
+
+    git_url: "https://github.com/ganeshSDevops/sample-index-html-for-nginx.git"
+    dest_path: /home/ubuntu/git-project
+  
+  tasks:
+  - name: Update apt cache
+    apt: 
+      update_cache: yes
+    when: ansible_distribution == "Ubuntu"
+
+  - name: Install nginx
+    apt: 
+      name: "{{ item }}"
+      state: present  
+    loop: "{{ appName }}"
+    when: ansible_distribution == "Ubuntu"
+
+  - name: Create directory  
+    file:
+      path: "{{ dest_path }}"
+      state: directory
+      mode: "0755"
+
+  - name: git clone repo
+    git:
+      repo: "{{ git_url }}"
+      dest: "{{ dest_path }}"
+      version: main
+      update: yes
+
+  - name: copy index.html to /var/www/html/index.html
+    copy:
+      src: "{{  dest_path }}/index.html"
+      dest: /var/www/html/index.html
+      remote_src: yes
+      notify: restart nginx
+
+  handlers:
+  - name: restart nginx
+    service:
+      name: nginx
+      state: restarted
+

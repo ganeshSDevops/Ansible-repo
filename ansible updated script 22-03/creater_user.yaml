@@ -1,0 +1,38 @@
+---
+- name: Create users on worker node
+  hosts: all
+  become: yes
+  gather_facts: yes
+
+  vars_files:
+    - password-file.yaml
+
+  vars:
+    users:
+      - ram
+      - sham
+      - gopal
+  
+  tasks:
+
+    - name: Create devops group
+      group:
+        name: devops
+        state: present
+
+    - name: Create multiple users with password
+      user:
+        name: "{{ item }}"
+        state: present
+        group: devops
+        shell: /bin/bash
+        create_home: yes
+        password: "{{ user_password }}"
+      loop: "{{ users }}"
+
+    - name: Add users to sudo group
+      user:
+        name: "{{ item }}"
+        groups: sudo
+        append: yes
+      loop: "{{ users }}"

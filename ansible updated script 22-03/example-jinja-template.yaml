@@ -1,0 +1,15 @@
+--- 
+- name: example of jinja template 
+  hosts: all 
+  become: yes
+  gather_facts: yes
+
+  vars:
+    appName: my-demo-app
+    userName: ganesh
+
+  tasks:
+  - name: copy app config file 
+    template:
+      src: app-config.j2
+      dest: /home/ubuntu/app.config
